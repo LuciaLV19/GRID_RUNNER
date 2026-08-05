@@ -89,12 +89,18 @@ export default function Sidebar() {
           </div>
 
           {/* Search Bar */}
-          <div className="relative">
+          <div className="relative m-1">
+            <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+              <span className="text-[10px] text-neon-magenta/70 font-mono">
+                ⌕
+              </span>
+            </div>
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="bg-black/50 rounded p-1 m-1 text-neon-magenta placeholder:text-neon-magenta/50 border border-neon-magenta/30 focus:outline-none focus:ring-2 focus:ring-neon-magenta w-full"
+              placeholder="Search projects"
+              className="w-full rounded border border-neon-magenta/30 bg-black/70 py-2 pl-8 pr-3 text-[11px] text-neon-magenta placeholder:text-neon-magenta/50 shadow-[0_0_0_1px_rgba(236,72,153,0.08)] outline-none transition-all duration-300 focus:border-neon-magenta focus:ring-2 focus:ring-neon-magenta/30 focus:shadow-[0_0_12px_rgba(236,72,153,0.18)]"
             />
           </div>
 

@@ -6,16 +6,22 @@ export default function ProjectList({
   searchQuery,
 }: { searchQuery?: string } = {}) {
   // Zustand Store Hooks
-  const favoriteProject = useProjectStore(
-    (state) => state.toggleFavoriteProject,
-  );
   const projectList = useProjectStore((state) => state.projects);
 
-  // Case-insensitive filtering based on project name
-  const filteredProjects = searchQuery
-    ? projectList.filter((project) =>
-        project.name.toLowerCase().includes(searchQuery.toLowerCase()),
-      )
+  const normalizedQuery = searchQuery?.trim().toLowerCase() ?? "";
+
+  const filteredProjects = normalizedQuery
+    ? projectList.filter((project) => {
+        const searchableText = [
+          project.name,
+          project.description,
+          project.key ?? "",
+        ]
+          .join(" ")
+          .toLowerCase();
+
+        return searchableText.includes(normalizedQuery);
+      })
     : projectList;
 
   return (

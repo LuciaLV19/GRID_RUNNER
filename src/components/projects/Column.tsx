@@ -60,7 +60,7 @@ export default function Column({
       {/* Task list container */}
       <div className="flex flex-col flex-1 gap-3 max-h-[60vh] overflow-y-auto pr-1">
         {tasks.length > 0 ? (
-          tasks.map((t) => <TaskCard key={t.id} {...t} />)
+          tasks.map((t) => <TaskCard key={t.id || t._id || ""} {...t} />)
         ) : (
           /* Clean visual empty state */
           <div className="h-24 border border-dashed border-white/5 rounded flex items-center justify-center text-[10px] bg-black text-white/30 uppercase tracking-widest">

@@ -1,7 +1,8 @@
 import type { Task } from "./Task";
 
 export type Project = {
-  id: string;
+  id?: string;
+  _id?: string;
   name: string;
   description: string;
   createdAt: string;

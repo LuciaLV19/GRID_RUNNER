@@ -32,27 +32,16 @@ export default function CreateTaskModal() {
 
   // Local state initialized with task data if in edit mode, or default empty values
   const [error, setError] = useState("");
-  const [taskName, setTaskName] = useState(isEditMode ? taskToEdit!.title : "");
+  const [taskName, setTaskName] = useState(taskToEdit?.title ?? "");
   const [taskDescription, setTaskDescription] = useState(
-    isEditMode ? taskToEdit!.description : "",
+    taskToEdit?.description ?? "",
   );
   const [taskPriority, setTaskPriority] = useState<Priority>(
-    isEditMode ? taskToEdit!.priority : "low",
+    taskToEdit?.priority ?? "low",
   );
-  const [taskCategory, setTaskCategory] = useState(
-    isEditMode ? taskToEdit!.category : "",
-  );
-  const [taskDueDate, setTaskDueDate] = useState(
-    isEditMode ? taskToEdit!.dueDate : "",
-  );
-  const [taskAssignee, setTaskAssignee] = useState<
-    | {
-        id: string;
-        name: string;
-        initials: string;
-      }
-    | undefined
-  >(isEditMode ? taskToEdit!.assignee : undefined);
+  const [taskCategory, setTaskCategory] = useState(taskToEdit?.category ?? "");
+  const [taskDueDate, setTaskDueDate] = useState(taskToEdit?.dueDate ?? "");
+  const [taskAssignee, setTaskAssignee] = useState(taskToEdit?.assignee);
 
   /**
    * Handles form validation, task creation or update dispatch, and modal dismissal.
@@ -68,7 +57,7 @@ export default function CreateTaskModal() {
 
     if (isEditMode) {
       // Update existing task
-      updateTask(taskToEdit!.id, taskFromProject!.id, {
+      updateTask(taskFromProject!.id, taskToEdit!.id, {
         title: taskNameTrimmed,
         description: taskDescriptionTrimmed,
         priority: taskPriority,
@@ -108,11 +97,16 @@ export default function CreateTaskModal() {
         <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
           {/* Task Name Input */}
           <div className="flex flex-col gap-2">
-            <label htmlFor="name">Task Name</label>
+            <label
+              htmlFor="name"
+              className="text-[10px] uppercase tracking-[0.2em] text-neon-cyan/70 font-bold"
+            >
+              Task Name
+            </label>
             <input
               type="text"
               id="name"
-              className="bg-black border border-neon-cyan/40 p-2 rounded"
+              className="w-full bg-black border border-neon-magenta/60 p-2 rounded text-white placeholder:text-neon-magenta/30 focus:outline-none focus:border-neon-magenta focus:shadow-[0_0_8px_rgba(236,72,153,0.25)] transition-all duration-200"
               value={taskName}
               onChange={(e) => setTaskName(e.target.value)}
             />
@@ -120,10 +114,15 @@ export default function CreateTaskModal() {
 
           {/* Task Description Textarea */}
           <div className="flex flex-col gap-2">
-            <label htmlFor="description">Task Description</label>
+            <label
+              htmlFor="description"
+              className="text-[10px] uppercase tracking-[0.2em] text-neon-cyan/70 font-bold"
+            >
+              Task Description
+            </label>
             <textarea
               id="description"
-              className="bg-black border border-neon-cyan/40 p-2 rounded"
+              className="w-full bg-black border border-neon-magenta/60 p-2 rounded text-white placeholder:text-neon-magenta/30 focus:outline-none focus:border-neon-magenta focus:shadow-[0_0_8px_rgba(236,72,153,0.25)] transition-all duration-200 resize-none"
               value={taskDescription}
               onChange={(e) => setTaskDescription(e.target.value)}
             />
@@ -132,10 +131,15 @@ export default function CreateTaskModal() {
           {/* Grid section for Priority, Assignee, Category, Due Date */}
           <div className="grid grid-cols-2 gap-2">
             <div className="flex flex-col gap-2">
-              <label htmlFor="priority">Task Priority</label>
+              <label
+                htmlFor="priority"
+                className="text-[10px] uppercase tracking-[0.2em] text-neon-cyan/70 font-bold"
+              >
+                Task Priority
+              </label>
               <select
                 id="priority"
-                className="bg-black border border-neon-cyan/40 p-2 rounded"
+                className="w-full bg-black border border-neon-magenta/60 p-2 rounded text-white focus:outline-none focus:border-neon-magenta focus:shadow-[0_0_8px_rgba(236,72,153,0.25)] transition-all duration-200"
                 value={taskPriority}
                 onChange={(e) => setTaskPriority(e.target.value as Priority)}
               >
@@ -144,10 +148,15 @@ export default function CreateTaskModal() {
                 <option value="high">High</option>
               </select>
 
-              <label htmlFor="assignee">Task Assignee</label>
+              <label
+                htmlFor="assignee"
+                className="text-[10px] uppercase tracking-[0.2em] text-neon-cyan/70 font-bold"
+              >
+                Task Assignee
+              </label>
               <select
                 id="assignee"
-                className="bg-black border border-neon-cyan/40 p-2 rounded"
+                className="w-full bg-black border border-neon-magenta/60 p-2 rounded text-white focus:outline-none focus:border-neon-magenta focus:shadow-[0_0_8px_rgba(236,72,153,0.25)] transition-all duration-200"
                 value={taskAssignee?.id || ""}
                 onChange={(e) => {
                   const selectedMember = TEAM_MEMBERS.find(
@@ -166,20 +175,30 @@ export default function CreateTaskModal() {
             </div>
 
             <div className="flex flex-col gap-2">
-              <label htmlFor="category">Task Category</label>
+              <label
+                htmlFor="category"
+                className="text-[10px] uppercase tracking-[0.2em] text-neon-cyan/70 font-bold"
+              >
+                Task Category
+              </label>
               <input
                 type="text"
                 id="category"
-                className="bg-black border border-neon-cyan/40 p-2 rounded"
+                className="w-full bg-black border border-neon-magenta/60 p-2 rounded text-white placeholder:text-neon-magenta/30 focus:outline-none focus:border-neon-magenta focus:shadow-[0_0_8px_rgba(236,72,153,0.25)] transition-all duration-200"
                 value={taskCategory}
                 onChange={(e) => setTaskCategory(e.target.value)}
               />
 
-              <label htmlFor="dueDate">Task Due Date</label>
+              <label
+                htmlFor="dueDate"
+                className="text-[10px] uppercase tracking-[0.2em] text-neon-cyan/70 font-bold"
+              >
+                Task Due Date
+              </label>
               <input
                 type="date"
                 id="dueDate"
-                className="bg-black border border-neon-cyan/40 p-2 rounded"
+                className="w-full bg-black border border-neon-magenta/60 p-2 rounded text-white focus:outline-none focus:border-neon-magenta focus:shadow-[0_0_8px_rgba(236,72,153,0.25)] transition-all duration-200"
                 value={taskDueDate}
                 onChange={(e) => setTaskDueDate(e.target.value)}
               />
@@ -192,14 +211,14 @@ export default function CreateTaskModal() {
             <div className="flex items-center gap-2">
               <button
                 type="button"
-                className="bg-black border border-neon-cyan/40 p-2 rounded cursor-pointer"
+                className="py-2 px-4 bg-transparent border border-neon-cyan/40 text-neon-cyan/60 hover:text-neon-cyan hover:border-neon-cyan transition-all duration-200 rounded uppercase tracking-wider text-[10px] cursor-pointer"
                 onClick={closeModal}
               >
                 Cancel
               </button>
               <button
                 type="submit"
-                className="bg-black border border-neon-cyan/40 p-2 rounded cursor-pointer"
+                className="py-2 px-5 bg-neon-cyan/10 border border-neon-cyan text-neon-cyan shadow-[0_0_10px_rgba(6,182,212,0.1)] hover:bg-neon-cyan hover:text-black transition-all duration-300 rounded font-black uppercase tracking-widest text-[10px] cursor-pointer active:scale-[0.97]"
               >
                 Save
               </button>

@@ -1,8 +1,9 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import { v4 as uuidv4 } from "uuid";
 import type { Project } from "../types/Project";
 import type { Task, Status } from "../types/Task";
+import { toast } from "sonner";
+import api from "../api/axios";
 
 /**
  * State interface defining state properties and state modification actions
@@ -16,11 +17,13 @@ interface ProjectState {
   projectToEdit: Project | undefined;
   taskToEdit: Task | undefined;
   activeProjectId: string | undefined;
+  loading: boolean;
+  error: string | null;
 
   // Project management actions
-  createProject: (name: string, description: string) => void;
-  deleteProject: (id: string) => void;
-  updateProject: (projectId: string, data: Partial<Project>) => void;
+  createProject: (name: string, description: string) => Promise<void>;
+  deleteProject: (id: string) => Promise<void>;
+  updateProject: (projectId: string, data: Partial<Project>) => Promise<void>;
   editProject: (project: Project) => void;
   toggleFavoriteProject: (id: string) => void;
   setActiveProjectId: (id: string) => void;
@@ -32,12 +35,13 @@ interface ProjectState {
   closeTaskModal: () => void;
 
   // Task management actions
-  createTask: (projectId: string, task: Task) => void;
-  deleteTask: (projectId: string, taskId: string) => void;
-  moveTask: (projectId: string, taskId: string, status: Status) => void;
-  updateTask: (projectId: string, taskId: string, data: Partial<Task>) => void;
+  createTask: (projectId: string, task: Task) => Promise<void>;
+  deleteTask: (projectId: string, taskId: string) => Promise<void>;
+  updateTask: (projectId: string, taskId: string, data: Partial<Task>) => Promise<void>;
   editTask: (task: Task) => void;
-  updateColumn: (taskId: string, status: Status) => void;
+  updateColumn: (taskId: string, status: Status) => Promise<void>;
+
+  fetchProjects: () => Promise<void>;
 }
 
 /**
@@ -54,6 +58,18 @@ export const useProjectStore = create<ProjectState>()(
       projectToEdit: undefined,
       taskToEdit: undefined,
       activeProjectId: undefined,
+      loading: false,
+      error: null,
+
+      fetchProjects: async () => {
+        set({ loading: true, error: null });
+        try {
+          const response = await api.get("/projects");
+          set({ projects: response.data, loading: false });
+        } catch (error: any) {
+          set({ error: error.response?.data?.message || "An error occurred", loading: false });
+        }
+      },
 
       // Active Project Selection
       setActiveProjectId: (id) =>
@@ -66,7 +82,7 @@ export const useProjectStore = create<ProjectState>()(
         set({ isOpenModalProject: true, projectToEdit: undefined }),
       closeProjectModal: () =>
         set({ isOpenModalProject: false, projectToEdit: undefined }),
-      editProject: (project) =>
+      editProject: (project) => 
         set({ isOpenModalProject: true, projectToEdit: project }),
 
       // Task Modals
@@ -76,103 +92,151 @@ export const useProjectStore = create<ProjectState>()(
       editTask: (task) => set({ isOpenModalTask: true, taskToEdit: task }),
 
       // Project CRUD Operations
-      createProject: (name, description) => {
-        const newProject: Project = {
-          id: uuidv4(),
-          name,
-          description,
-          createdAt: new Date().toISOString(),
-          isFavorite: false,
-          tasks: [],
-        };
+      createProject: async (name, description) => {
+      try {
+        const response = await api.post("/projects", { name, description });
+        const newProjectFromDB = response.data;
 
         set((state) => ({
-          projects: [...state.projects, newProject],
-          activeProjectId: newProject.id, // Auto-select created project
+          projects: [...state.projects, newProjectFromDB],
+          activeProjectId: newProjectFromDB._id || newProjectFromDB.id, // Auto-select created project
         }));
-      },
+        toast.success("[ SYSTEM_LOG: PROJECT_CREATED ]", {
+          description: "The project has been created.",
+        });
+      } catch (error: any) {
+        toast.error("[ SYSTEM_LOG: PROJECT_CREATION_FAILED ]", {
+          description: "The project could not be created.",
+        });
+      }
+    },
 
-      deleteProject: (id) => {
+      deleteProject: async (id) => {
+        try{
+        await api.delete(`/projects/${id}`);
+
         set((state) => ({
-          projects: state.projects.filter((p) => p.id !== id),
+          projects: state.projects.filter((p) => (p._id || p.id) !== id),
           activeProjectId:
             state.activeProjectId === id ? undefined : state.activeProjectId,
         }));
+        toast.error("[ SYSTEM_LOG: PROJECT_DELETED ]", {
+          description: "The project has been deleted.",
+        });
+        } catch (error: any){
+          toast.error("[SYSTEM_LOG: PROJECT_DELETED_FAILED]", {
+          description: "The project could not be deleted."
+          });
+        }
       },
 
-      updateProject: (projectId, data) => {
-        set((state) => ({
+      updateProject: async (projectId, data) => {
+        try {
+          await api.put(`/projects/${projectId}`, data);
+          set((state) => ({
           projects: state.projects.map((p) =>
-            p.id === projectId ? { ...p, ...data } : p,
+            (p._id || p.id) === projectId ? { ...p, ...data } : p,
           ),
         }));
+        toast.success("[ SYSTEM_LOG: PROJECT_UPDATED ]", {
+          description: "The project has been updated.",
+        });
+        }        
+         catch (error: any) {
+          toast.error("[ SYSTEM_LOG: PROJECT_UPDATE_FAILED ]", {
+            description: "The project could not be updated.",
+          });
+        }
       },
 
       toggleFavoriteProject: (id) => {
         set((state) => ({
           projects: state.projects.map((p) =>
-            p.id === id ? { ...p, isFavorite: !p.isFavorite } : p,
+            (p._id || p.id) === id ? { ...p, isFavorite: !p.isFavorite } : p,
           ),
         }));
       },
 
       // Task CRUD Operations
-      createTask: (projectId, task) => {
-        set((state) => ({
+      createTask: async (projectId, task) => {
+        try {
+          const response = await api.post(`/projects/${projectId}/tasks`, task);
+          const newTask = response.data;
+
+          set((state) => ({
           projects: state.projects.map((p) =>
-            p.id === projectId ? { ...p, tasks: [...p.tasks, task] } : p,
+            (p._id || p.id) === projectId ? 
+          { ...p, tasks: [...(p.tasks || []), newTask] }
+          : p,
           ),
         }));
+        toast.success("[ SYSTEM_LOG: TASK_CREATED ]", {
+          description: "The task has been created.",
+        });
+        } catch (error: any) {
+          toast.error("[ SYSTEM_LOG: TASK_CREATION_FAILED ]", {
+            description: "The task could not be created.",
+          });
+        }
       },
 
-      deleteTask: (projectId, taskId) => {
-        set((state) => ({
+      deleteTask: async (projectId, taskId) => {
+        try {
+          await api.delete(`/projects/${projectId}/tasks/${taskId}`);
+          set((state) => ({
           projects: state.projects.map((p) =>
-            p.id === projectId
-              ? { ...p, tasks: p.tasks.filter((t) => t.id !== taskId) }
+            (p._id || p.id) === projectId
+              ? { ...p, tasks: (p.tasks || []).filter((t) => (t._id || t.id) !== taskId) }
               : p,
           ),
         }));
+        } catch (error: any) {
+          toast.error("[ SYSTEM_LOG: TASK_DELETION_FAILED ]", {
+            description: "The task could not be deleted.",
+          });
+        }
       },
 
-      moveTask: (projectId, taskId, status) => {
-        set((state) => ({
-          projects: state.projects.map((p) =>
-            p.id === projectId
-              ? {
-                  ...p,
-                  tasks: p.tasks.map((t) =>
-                    t.id === taskId ? { ...t, status } : t,
-                  ),
-                }
-              : p,
+      updateTask: async (projectId, taskId, data) => {
+        try {
+          await api.put(`/projects/${projectId}/tasks/${taskId}`, data);
+          set((state) => ({
+            projects: state.projects.map((p) =>
+              (p._id || p.id) === projectId
+                ? {
+                    ...p,
+                    tasks: (p.tasks || []).map((t) =>
+                      (t._id || t.id) === taskId ? { ...t, ...data } : t,
+                    ),
+                  }
+                : p,
+            ),
+          }));
+        } catch (error: any) {
+          toast.error("[ SYSTEM_LOG: TASK_UPDATE_FAILED ]", {
+            description: "The task could not be updated.",
+          });
+        }
+      },
+
+      updateColumn: async (taskId, status) => {
+      set((state) => ({
+        projects: state.projects.map((p) => ({
+          ...p,
+          tasks: (p.tasks || []).map((t) =>
+            (t._id || t.id) === taskId ? { ...t, status } : t
           ),
-        }));
-      },
+        })),
+      }));
 
-      updateTask: (projectId, taskId, data) => {
-        set((state) => ({
-          projects: state.projects.map((p) =>
-            p.id === projectId
-              ? {
-                  ...p,
-                  tasks: p.tasks.map((t) =>
-                    t.id === taskId ? { ...t, ...data } : t,
-                  ),
-                }
-              : p,
-          ),
-        }));
-      },
-
-      updateColumn: (taskId, status) => {
-        set((state) => ({
-          projects: state.projects.map((p) => ({
-            ...p,
-            tasks: p.tasks.map((t) => (t.id === taskId ? { ...t, status } : t)),
-          })),
-        }));
-      },
+      try {
+        await api.put(`/tasks/${taskId}`, { status });
+      } catch (error: any) {
+        toast.error("[ SYSTEM_LOG: TASK_MOVE_FAILED ]", {
+          description: "Could not update task status on the server.",
+        });
+      }
+    },
     }),
     {
       name: "project-storage",

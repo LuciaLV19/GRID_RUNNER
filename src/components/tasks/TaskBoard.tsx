@@ -19,31 +19,15 @@ export default function TaskBoard({ tasks }: TaskBoardProps) {
 
   return (
     <div className="flex gap-4 pb-4 w-full overflow-x-auto min-h-0 select-none">
+      <Column title={`BACKLOG`} tasks={backlogTasks} status="backlog" />
+      <Column title={`TO DO`} tasks={todoTasks} status="todo" />
       <Column
-        title={`BACKLOG (${backlogTasks.length})`}
-        tasks={backlogTasks}
-        status="backlog"
-      />
-      <Column
-        title={`TO DO (${todoTasks.length})`}
-        tasks={todoTasks}
-        status="todo"
-      />
-      <Column
-        title={`IN PROGRESS (${inProgressTasks.length})`}
+        title={`IN PROGRESS`}
         tasks={inProgressTasks}
         status="in_progress"
       />
-      <Column
-        title={`TESTING (${testingTasks.length})`}
-        tasks={testingTasks}
-        status="testing"
-      />
-      <Column
-        title={`DONE (${doneTasks.length})`}
-        tasks={doneTasks}
-        status="compiled"
-      />
+      <Column title={`TESTING`} tasks={testingTasks} status="testing" />
+      <Column title={`DONE`} tasks={doneTasks} status="compiled" />
     </div>
   );
 }
